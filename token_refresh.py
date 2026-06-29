@@ -1,20 +1,14 @@
 """
-token_refresh.py
-================
-Runs every weekday at 8:00 AM on Railway.
-Sends Upstox login link to Telegram.
-Waits for user to paste redirect URL.
-Extracts auth code and gets access token.
-Saves token to token.txt
+token_refresh.py - Fixed version with proper URL encoding
 """
 
 import os
 import re
 import time
 import requests
+from urllib.parse import quote
 
-# Read directly from environment variables
-# Railway injects these automatically — no .env file needed
+# Read from environment variables
 API_KEY      = os.environ.get("UPSTOX_API_KEY", "")
 SECRET_KEY   = os.environ.get("UPSTOX_SECRET_KEY", "")
 REDIRECT_URL = os.environ.get("UPSTOX_REDIRECT_URL", "")
@@ -24,12 +18,13 @@ CHAT_ID      = os.environ.get("TELEGRAM_CHAT_ID", "")
 def send_telegram(message):
     try:
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        requests.post(url, data={
+        response = requests.post(url, data={
             "chat_id": CHAT_ID,
             "text": message,
             "parse_mode": "HTML"
         }, timeout=10)
-        print(f"Telegram sent: {message[:60]}...")
+        print(f"Telegram response: {response.status_code}")
+        print(f"Telegram sent: {message[:80]}")
     except Exception as e:
         print(f"Telegram error: {e}")
 
@@ -107,7 +102,7 @@ def get_access_token(auth_code):
         "grant_type": "authorization_code"
     }
     response = requests.post(url, headers=headers, data=data, timeout=30)
-    print(f"Token response: {response.status_code}")
+    print(f"Token response: {response.status_code} - {response.text[:200]}")
     if response.status_code == 200:
         token = response.json().get("access_token")
         if token:
@@ -124,20 +119,25 @@ def save_token(token):
 def main():
     print("=" * 50)
     print("Starting token refresh...")
-    print(f"API_KEY: {API_KEY[:8]}..." if API_KEY else "API_KEY: MISSING")
+    print(f"API_KEY present: {bool(API_KEY)}")
+    print(f"API_KEY value: {API_KEY}")
+    print(f"SECRET_KEY present: {bool(SECRET_KEY)}")
     print(f"REDIRECT_URL: {REDIRECT_URL}")
-    print(f"BOT_TOKEN: {BOT_TOKEN[:10]}..." if BOT_TOKEN else "BOT_TOKEN: MISSING")
+    print(f"BOT_TOKEN present: {bool(BOT_TOKEN)}")
     print(f"CHAT_ID: {CHAT_ID}")
     print("=" * 50)
 
     try:
-        # Build login URL
+        # Build login URL with proper encoding
+        encoded_redirect = quote(REDIRECT_URL, safe='')
         auth_url = (
             f"https://api.upstox.com/v2/login/authorization/dialog"
             f"?response_type=code"
             f"&client_id={API_KEY}"
-            f"&redirect_uri={REDIRECT_URL}"
+            f"&redirect_uri={encoded_redirect}"
         )
+
+        print(f"Auth URL: {auth_url}")
 
         # Send to Telegram
         send_telegram(
