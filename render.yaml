@@ -1,0 +1,14 @@
+services:
+  - type: cron
+    name: token-refresh
+    env: python
+    schedule: "30 2 * * 1-5"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python token_refresh.py
+
+  - type: cron
+    name: market-report
+    env: python
+    schedule: "15 3 * * 1-5"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python market_report.py
