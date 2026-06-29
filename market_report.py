@@ -12,14 +12,14 @@ import os
 import json
 import requests
 from datetime import datetime
-from dotenv import load_dotenv
+
 
 # Load credentials
-load_dotenv("credentials.env")
 
-BOT_TOKEN       = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID         = os.getenv("TELEGRAM_CHAT_ID")
-ANTHROPIC_KEY   = os.getenv("ANTHROPIC_API_KEY")
+
+BOT_TOKEN       = os.environ.get("TELEGRAM_BOT_TOKEN")
+CHAT_ID         = os.environ.get("TELEGRAM_CHAT_ID")
+ANTHROPIC_KEY   = os.environ.get("ANTHROPIC_API_KEY")
 
 # ============================================
 # NIFTY 50 STOCK LIST
